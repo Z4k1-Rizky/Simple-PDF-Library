@@ -8,7 +8,7 @@
   background-color: #383838;
 }
 
-.navbar .pageName {
+.pageName {
   color: white;
   text-align: center;
   position: relative;
@@ -23,6 +23,8 @@
   display: inline-block;
   text-align: center;
   padding: 2em;
+  width: 269px;
+  height: 355px;
 }
 
 .fileName {
@@ -33,16 +35,31 @@
   font-size: 20px;
 }
 
-.actionButton {
+#actionButton {
   position: fixed;
   z-index: 4;
   bottom: 0;
   right: 0;
-  padding: 30px;
+  padding:  30px;
 }
 
-.actionButton:active {
-  transform: rotate(45deg);
+#actionButtonMenu {
+  width: 300px;
+  height: 400px;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  margin: 30px;
+  background-color: #383838;
+  visibility: hidden;
+}
+
+.actionButtonMenuText {
+  display: block;
+  color: white;
+  margin: 30px;
+  font-size: 32px;
+  font-weight: 400px;
 }
 
 .footer {
