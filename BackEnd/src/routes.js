@@ -1,4 +1,4 @@
-const { getAllFiles, addFile, updatefile,deleteFile } = require("./handler");
+const { getAllFiles, addFile, updateFile,deleteFile } = require("./handler");
 
 const routes = [
   {
@@ -14,7 +14,7 @@ const routes = [
   {
     method: "PUT",
     path: "/home",
-    handler: updatefile,
+    handler: updateFile,
   },
   {
     method: "DELETE",
