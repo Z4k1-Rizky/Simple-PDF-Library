@@ -1,95 +1,128 @@
 const { nanoid } = require("nanoid");
-const file = require('./tempFile');
-
-const getAllFiles = () => ({
-  status: "success",
-  data: {
-    file,
-  },
+const mysql = require("mysql2");
+const con = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "123",
+  database: "simple_pdf_library",
 });
 
-const addFile = (req, h) => {
-  const id = nanoid(16);
-  const { name } = req.payload;
-  const createdAt = new Date().toISOString();
-  const updatedAt = createdAt;
-
-  const newFile = {
-    id, name, createdAt, updatedAt,
-  };
-
-  file.push(newFile);
-
-  const isSuccess = file.filter((f) => f.id === id).length > 0;
-
-  if (isSuccess) {
-    const response = h.response({
-      status: "success",
-      message: "File added.",
-      data: {
-        fileId: id,
-      },
+const getAllFiles = (req, h) => {
+  return new Promise((resolve, reject) => {
+    con.query("SELECT * FROM Files", function (err, file) {
+      if (err) reject(err);
+      const response = h.response({
+        status: "success",
+        data: {
+          file,
+        },
+      });
+      response.code(200);
+      resolve(response);
     });
-    response.code(201);
-    return response;
-  }
-}
+  });
+};
 
-const updateFile = (req, h) => {
-  const { id, name } = req.payload;
-  const updatedAt = new Date().toISOString();
+const addFile = (req, h) => {
+  return new Promise((resolve, reject) => {
+    const id = nanoid(16);
+    const { name } = req.payload;
+    const createdAt = new Date().toISOString();
+    const updatedAt = createdAt;
 
-  const index = file.findIndex((f) => f.id === id);
-  
-  if (index !== -1) {
-    file[index] = {
-      ...file[index],
-      name,
-      updatedAt,
-    };
+    let sql = `INSERT INTO Files (ID, NAME, CREATEDAT, UPDATEDAT, PATH) VALUES ('${id}', '${name}', '${createdAt}', '${updatedAt}', 'placeholder')`;
 
-    editedFile = file[index];
+    con.query(sql, function (err, result) {
+      if (err) reject(err);
+      console.log("1 record inserted");
+    });
 
-    const response = h.response({
-      status: "success",
-      message: "File updated.",
-      data: {
-        editedFile,
+    con.query(`SELECT * FROM Files WHERE ID = '${id}'`, function (err, result) {
+      if (err) reject(err);
+      const isSuccess = result[0].ID === id;
+      if (isSuccess) {
+        const response = h.response({
+          status: "success",
+          message: "File added.",
+          data: {
+            fileId: id,
+          },
+        });
+        response.code(201);
+        resolve(response);
       }
     });
-    response.code(200);
-    return response;
-  };
-
-  const response = h.response({
-    status: "fail",
-    message: "File not found.",
   });
-  response.status(404);
-  return response;
+};
+
+const updateFile = (req, h) => {
+  return new Promise((resolve, reject) => {
+    const { id, name } = req.payload;
+    const updatedAt = new Date().toISOString();
+
+    con.query(
+      `UPDATE Files SET NAME = '${name}', UPDATEDAT = '${updatedAt}' WHERE ID = '${id}'`,
+      function (err, result) {
+        if (err) reject(err);
+        if (result.affectedRows === 0) {
+          const response = h.response({
+            status: "fail",
+            message: "File not found.",
+          });
+          response.code(404);
+          resolve(response);
+        }
+        console.log(result.affectedRows + " record(s) updated");
+      }
+    );
+
+    con.query(`SELECT * FROM Files WHERE ID = '${id}'`, function (err, result) {
+      if (err) reject(err);
+      if (result[0].NAME === name) {
+        const editedFile = result[0];
+        const response = h.response({
+          status: "success",
+          message: "File updated.",
+          data: {
+            editedFile,
+          },
+        });
+        response.code(200);
+        resolve(response);
+      }
+    });
+  });
 };
 
 const deleteFile = (req, h) => {
-  const { id } = req.payload;
+  return new Promise((resolve, reject) => {
+    const { id } = req.payload;
 
-  const index = file.findIndex((f) => f.id === id);
-
-  if (index !== -1) {
-    file.splice(index, 1);
-    const response = h.response({
-      status: "success",
-      message: "File deleted.",
+    con.query(`DELETE FROM Files WHERE ID = '${id}'`, function (err, result) {
+      if (err) reject(err);
+      if (result.affectedRows === 0) {
+        const response = h.response({
+          status: "fail",
+          message: "File not found.",
+        });
+        response.code(404);
+        resolve(response);
+      }
+      console.log("Number of records deleted: " + result.affectedRows);
     });
-    response.code(200);
-    return response;
-  }
 
-  const response = h.response({
-    status: "fail",
-    message: "File not found.",
+    con.query(`SELECT * FROM Files WHERE ID = '${id}'`, function (err, result) {
+      if (err) reject(err);
+      if (result.length === 0) {
+        const response = h.response({
+          status: "success",
+          message: "File deleted.",
+        });
+        response.code(200);
+        resolve(response);
+      }
+    });
   });
-  response.code(404);
-  return response;
 };
 
 module.exports = { getAllFiles, addFile, updateFile, deleteFile };
